@@ -1,0 +1,41 @@
+version: '3.4'
+
+services:
+  cs.basket.api:
+    image: ${DOCKER_REGISTRY-}csbasketapi
+    build:
+      context: .
+      dockerfile: CS.Basket.Api/Dockerfile
+    ports:
+      - "9901:80"
+    depends_on:
+       - basketdb
+       - rabbitmq
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - AppSettings:CacheSettings:ConnectionString=basketdb:6379
+      - AppSettings:RabbitMQSetting:Hostname=rabbit
+    networks:
+      - cs-basket-network
+
+  basketdb:
+    image: redis:alpine
+    container_name: basketdb
+    ports:
+      - "6379:6379"
+    networks:
+      - cs-basket-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    networks:
+        - cs-basket-network
+    hostname: 'rabbit'
+
+networks:
+  cs-basket-network:
+    driver: bridge
